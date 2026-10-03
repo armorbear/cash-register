@@ -1,0 +1,2214 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Cash Register</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #101010, #202020);
+            color: white;
+        }
+
+        /* =========================
+           MAIN LAYOUT
+           ========================= */
+
+        .container {
+            width: 98%;
+            height: 96vh;
+            margin: 2vh auto;
+
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 1.35fr)
+                minmax(400px, 0.85fr);
+
+            gap: 20px;
+        }
+
+        .database,
+        .pos {
+            background: #181818;
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+            box-shadow:
+                0 5px 20px
+                rgba(0, 0, 0, 0.35);
+
+            min-height: 0;
+        }
+
+        h1,
+        h2 {
+            margin-top: 0;
+        }
+
+        /* =========================
+           ADMIN BAR
+           ========================= */
+
+        .admin-bar {
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            background: #222;
+
+            padding: 10px 12px;
+
+            border-radius: 8px;
+
+            margin-bottom: 15px;
+
+            gap: 10px;
+        }
+
+        .admin-status {
+            font-size: 14px;
+
+            font-weight: bold;
+        }
+
+        .admin-locked {
+            color: #ef4444;
+        }
+
+        .admin-unlocked {
+            color: #22c55e;
+        }
+
+        .admin-button {
+            border: none;
+
+            padding: 8px 12px;
+
+            border-radius: 6px;
+
+            color: white;
+
+            background: #1976d2;
+
+            cursor: pointer;
+
+            font-size: 13px;
+        }
+
+        .admin-button:hover {
+            background: #125ca1;
+        }
+
+        .admin-logout {
+            background: #dc2626;
+        }
+
+        .admin-logout:hover {
+            background: #b91c1c;
+        }
+
+        /* =========================
+           DATABASE
+           ========================= */
+
+        .database {
+            display: flex;
+
+            flex-direction: column;
+
+            overflow: hidden;
+        }
+
+        h1 {
+            margin-bottom: 15px;
+        }
+
+        .top-buttons {
+            display: flex;
+
+            gap: 10px;
+
+            margin-bottom: 15px;
+        }
+
+        .add-item,
+        .add-coupon {
+            display: inline-block;
+
+            padding: 11px 16px;
+
+            border-radius: 8px;
+
+            text-decoration: none;
+
+            color: white;
+
+            font-size: 15px;
+        }
+
+        .add-item {
+            background: #1976d2;
+        }
+
+        .add-item:hover {
+            background: #125ca1;
+        }
+
+        .add-coupon {
+            background: #20ad5b;
+        }
+
+        .add-coupon:hover {
+            background: #178c49;
+        }
+
+        /* =========================
+           DATABASE TABLE
+           ========================= */
+
+        .database table {
+            width: 100%;
+
+            border-collapse: collapse;
+
+            display: block;
+
+            overflow-y: auto;
+
+            flex: 1;
+        }
+
+        .database thead,
+        .database tbody {
+            width: 100%;
+        }
+
+        .database thead {
+            position: sticky;
+
+            top: 0;
+
+            z-index: 2;
+        }
+
+        .database tr {
+            display: table;
+
+            width: 100%;
+
+            table-layout: fixed;
+        }
+
+        th {
+            background: #262626;
+
+            text-align: left;
+
+            padding: 11px;
+        }
+
+        td {
+            padding: 10px 11px;
+
+            border-bottom: 1px solid #333;
+
+            vertical-align: middle;
+        }
+
+        tr.item-row:hover {
+            background: #202020;
+        }
+
+        tr.coupon-row {
+            background: #102319;
+        }
+
+        tr.coupon-row:hover {
+            background: #153020;
+        }
+
+        .database th:nth-child(1),
+        .database td:nth-child(1) {
+            width: 14%;
+        }
+
+        .database th:nth-child(2),
+        .database td:nth-child(2) {
+            width: 20%;
+        }
+
+        .database th:nth-child(3),
+        .database td:nth-child(3) {
+            width: 14%;
+        }
+
+        .database th:nth-child(4),
+        .database td:nth-child(4) {
+            width: 25%;
+        }
+
+        .database th:nth-child(5),
+        .database td:nth-child(5) {
+            width: 27%;
+        }
+
+        .type-badge {
+            display: inline-block;
+
+            background: #20ad5b;
+
+            padding: 5px 8px;
+
+            border-radius: 5px;
+
+            font-size: 12px;
+
+            font-weight: bold;
+        }
+
+        /* =========================
+           ACTION BUTTONS
+           ========================= */
+
+        .actions {
+            display: flex;
+
+            gap: 6px;
+
+            align-items: center;
+
+            flex-wrap: nowrap;
+        }
+
+        .actions a {
+            display: inline-block;
+
+            padding: 7px 10px;
+
+            border-radius: 6px;
+
+            text-decoration: none;
+
+            color: white;
+
+            font-size: 13px;
+
+            white-space: nowrap;
+        }
+
+        .edit-btn {
+            background: #1976d2;
+        }
+
+        .edit-btn:hover {
+            background: #125ca1;
+        }
+
+        .delete-btn {
+            background: #dc2626;
+        }
+
+        .delete-btn:hover {
+            background: #b91c1c;
+        }
+
+        /* =========================
+           POS
+           ========================= */
+
+        .pos {
+            display: flex;
+
+            flex-direction: column;
+
+            overflow: hidden;
+        }
+
+        .pos h2 {
+            margin-bottom: 12px;
+        }
+
+        /* =========================
+           SCANNER
+           ========================= */
+
+        .scanner {
+            display: flex;
+
+            gap: 10px;
+
+            margin-bottom: 10px;
+        }
+
+        #display {
+            width: 100%;
+
+            padding: 13px;
+
+            font-size: 20px;
+
+            background: #252525;
+
+            border: 1px solid #444;
+
+            border-radius: 8px;
+
+            color: white;
+
+            outline: none;
+        }
+
+        #display:focus {
+            border-color: #1976d2;
+        }
+
+        /* =========================
+           KEYPAD
+           ========================= */
+
+        .keypad {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 6px;
+
+            margin-bottom: 10px;
+        }
+
+        .keypad button {
+            padding: 12px;
+
+            font-size: 18px;
+
+            background: #292929;
+
+            border: none;
+
+            border-radius: 7px;
+
+            color: white;
+
+            cursor: pointer;
+        }
+
+        .keypad button:hover {
+            background: #3a3a3a;
+        }
+
+        .key-enter {
+            background: #1976d2 !important;
+        }
+
+        .key-enter:hover {
+            background: #125ca1 !important;
+        }
+
+        .key-clear {
+            background: #dc2626 !important;
+        }
+
+        .key-clear:hover {
+            background: #b91c1c !important;
+        }
+
+        /* =========================
+           CART
+           ========================= */
+
+        .cart {
+            margin-top: 5px;
+
+            flex: 1;
+
+            min-height: 0;
+
+            overflow-y: auto;
+        }
+
+        .cart h2 {
+            margin-bottom: 10px;
+        }
+
+        .cart-item {
+            background: #222;
+
+            padding: 9px;
+
+            border-radius: 8px;
+
+            margin-bottom: 7px;
+        }
+
+        .cart-top {
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+        }
+
+        .cart-name {
+            flex: 1;
+
+            font-weight: bold;
+
+            min-width: 0;
+        }
+
+        .cart-code {
+            color: #aaa;
+
+            font-size: 12px;
+
+            margin-top: 2px;
+        }
+
+        .quantity-controls {
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+        }
+
+        .quantity-controls button {
+            width: 27px;
+
+            height: 27px;
+
+            border: none;
+
+            border-radius: 5px;
+
+            background: #444;
+
+            color: white;
+
+            cursor: pointer;
+        }
+
+        .quantity-controls button:hover {
+            background: #555;
+        }
+
+        .quantity {
+            min-width: 22px;
+
+            text-align: center;
+        }
+
+        .cart-price {
+            min-width: 70px;
+
+            text-align: right;
+
+            font-weight: bold;
+        }
+
+        /* =========================
+           CART ACTIONS
+           ========================= */
+
+        .cart-actions {
+            display: flex;
+
+            gap: 6px;
+
+            margin-top: 7px;
+        }
+
+        .cart-actions button {
+            border: none;
+
+            padding: 6px 9px;
+
+            border-radius: 5px;
+
+            color: white;
+
+            cursor: pointer;
+
+            font-size: 12px;
+        }
+
+        .price-btn {
+            background: #1976d2;
+        }
+
+        .price-btn:hover {
+            background: #125ca1;
+        }
+
+        .discount-btn {
+            background: #20ad5b;
+        }
+
+        .discount-btn:hover {
+            background: #178c49;
+        }
+
+        .remove-discount-btn {
+            background: #dc2626;
+        }
+
+        .remove-discount-btn:hover {
+            background: #b91c1c;
+        }
+
+        /* =========================
+           TOTALS
+           ========================= */
+
+        .totals {
+            margin-top: 10px;
+
+            background: #222;
+
+            padding: 11px;
+
+            border-radius: 8px;
+        }
+
+        .total-row {
+            display: flex;
+
+            justify-content: space-between;
+
+            margin: 5px 0;
+        }
+
+        .grand-total {
+            font-size: 22px;
+
+            font-weight: bold;
+
+            border-top: 1px solid #444;
+
+            padding-top: 9px;
+        }
+
+        /* =========================
+           BOTTOM BUTTONS
+           ========================= */
+
+        .bottom-buttons {
+            display: flex;
+
+            gap: 8px;
+
+            margin-top: 10px;
+        }
+
+        .bottom-buttons button {
+            flex: 1;
+
+            padding: 11px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            color: white;
+
+            font-size: 15px;
+
+            cursor: pointer;
+        }
+
+        .selected-discount {
+            background: #20ad5b;
+        }
+
+        .selected-discount:hover {
+            background: #178c49;
+        }
+
+        .new-sale {
+            background: #dc2626;
+        }
+
+        .new-sale:hover {
+            background: #b91c1c;
+        }
+
+        .checkout {
+            background: #2563eb;
+        }
+
+        .checkout:hover {
+            background: #1d4ed8;
+        }
+
+        /* =========================
+           SCROLLBARS
+           ========================= */
+
+        .database table::-webkit-scrollbar,
+        .cart::-webkit-scrollbar {
+            width: 7px;
+        }
+
+        .database table::-webkit-scrollbar-track,
+        .cart::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        .database table::-webkit-scrollbar-thumb,
+        .cart::-webkit-scrollbar-thumb {
+            background: #444;
+
+            border-radius: 10px;
+        }
+
+        .database table::-webkit-scrollbar-thumb:hover,
+        .cart::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* =========================
+           SMALL SCREENS
+           ========================= */
+
+        @media (max-width: 1000px) {
+
+            html,
+            body {
+                overflow: auto;
+            }
+
+            .container {
+                height: auto;
+
+                grid-template-columns: 1fr;
+            }
+
+            .database {
+                min-height: 500px;
+            }
+
+            .pos {
+                min-height: 650px;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                width: 98%;
+
+                margin: 10px auto;
+            }
+
+            .database,
+            .pos {
+                padding: 14px;
+            }
+
+            .actions {
+                flex-direction: column;
+
+                align-items: stretch;
+            }
+
+            .actions a {
+                text-align: center;
+            }
+
+            .cart-top {
+                flex-wrap: wrap;
+            }
+
+            .admin-bar {
+                flex-direction: column;
+
+                align-items: stretch;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- =========================
+         CASH DATABASE
+         ========================= -->
+
+    <div class="database">
+
+        <h1>Cash Database</h1>
+
+        <!-- ADMINISTRATOR BAR -->
+
+        <div class="admin-bar">
+
+            <span
+                id="adminStatus"
+                class="admin-status admin-locked">
+
+                🔒 Administrator Locked
+
+            </span>
+
+            <button
+                id="adminButton"
+                class="admin-button"
+                onclick="administratorLogin()">
+
+                Administrator Login
+
+            </button>
+
+        </div>
+
+
+        <div class="top-buttons">
+
+            <a
+                href="/cash/new"
+                class="add-item"
+                onclick="return requireAdministrator();">
+
+                + Add Item
+
+            </a>
+
+            <a
+                href="/coupons/new"
+                class="add-coupon"
+                onclick="return requireAdministrator();">
+
+                + Add Coupon
+
+            </a>
+
+        </div>
+
+
+        <table>
+
+            <thead>
+
+            <tr>
+
+                <th>Code</th>
+
+                <th>Name</th>
+
+                <th>Type</th>
+
+                <th>Details</th>
+
+                <th>Actions</th>
+
+            </tr>
+
+            </thead>
+
+
+            <tbody>
+
+            <!-- =========================
+                 ITEMS
+                 ========================= -->
+
+            <tr
+                class="item-row"
+                th:each="item : ${cash}">
+
+                <td th:text="${item.code}">
+                    0203
+                </td>
+
+
+                <td>
+
+                    <span
+                        th:if="${item.name != null and !item.name.isEmpty()}"
+                        th:text="${item.name}">
+
+                        Item Name
+
+                    </span>
+
+
+                    <span
+                        th:if="${item.name == null or item.name.isEmpty()}">
+
+                        No Name
+
+                    </span>
+
+                </td>
+
+
+                <td>
+                    Item
+                </td>
+
+
+                <td>
+
+                    $
+
+                    <span
+                        th:text="${#numbers.formatDecimal(item.price, 1, 2)}">
+
+                        0.00
+
+                    </span>
+
+                </td>
+
+
+                <td>
+
+                    <div class="actions">
+
+                        <a
+                            th:href="@{/cash/edit/{id}(id=${item.id})}"
+                            class="edit-btn"
+                            onclick="return requireAdministrator();">
+
+                            Edit
+
+                        </a>
+
+
+                        <a
+                            th:href="@{/cash/delete/{id}(id=${item.id})}"
+                            class="delete-btn"
+                            onclick="return requireAdministrator() && confirm('Are you sure you want to delete this item?');">
+
+                            Delete
+
+                        </a>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+
+            <!-- =========================
+                 COUPONS
+                 ========================= -->
+
+            <tr
+                class="coupon-row"
+                th:each="coupon : ${coupons}">
+
+                <td th:text="${coupon.code}">
+                    5555
+                </td>
+
+
+                <td>
+                    Coupon
+                </td>
+
+
+                <td>
+
+                    <span class="type-badge">
+                        Coupon
+                    </span>
+
+                </td>
+
+
+                <td>
+
+                    <span
+                        th:text="${coupon.discountPercent + '% OFF - Item ' + coupon.itemCode}">
+
+                        20% OFF - Item 0203
+
+                    </span>
+
+                </td>
+
+
+                <td>
+
+                    <div class="actions">
+
+                        <a
+                            th:href="@{/coupons/edit/{id}(id=${coupon.id})}"
+                            class="edit-btn"
+                            onclick="return requireAdministrator();">
+
+                            Edit
+
+                        </a>
+
+
+                        <a
+                            th:href="@{/coupons/delete/{id}(id=${coupon.id})}"
+                            class="delete-btn"
+                            onclick="return requireAdministrator() && confirm('Are you sure you want to delete this coupon?');">
+
+                            Delete
+
+                        </a>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- =========================
+         POS
+         ========================= -->
+
+    <div class="pos">
+
+        <h2>Calculator / Scanner</h2>
+
+
+        <div class="scanner">
+
+            <input
+                type="text"
+                id="display"
+                placeholder="Scan barcode..."
+                maxlength="30"
+                inputmode="numeric"
+                autofocus>
+
+        </div>
+
+
+        <!-- =========================
+             KEYPAD
+             ========================= -->
+
+        <div class="keypad">
+
+            <button onclick="addNumber('1')">
+                1
+            </button>
+
+            <button onclick="addNumber('2')">
+                2
+            </button>
+
+            <button onclick="addNumber('3')">
+                3
+            </button>
+
+
+            <button onclick="addNumber('4')">
+                4
+            </button>
+
+            <button onclick="addNumber('5')">
+                5
+            </button>
+
+            <button onclick="addNumber('6')">
+                6
+            </button>
+
+
+            <button onclick="addNumber('7')">
+                7
+            </button>
+
+            <button onclick="addNumber('8')">
+                8
+            </button>
+
+            <button onclick="addNumber('9')">
+                9
+            </button>
+
+
+            <button
+                class="key-clear"
+                onclick="clearDisplay()">
+
+                C
+
+            </button>
+
+
+            <button onclick="addNumber('0')">
+
+                0
+
+            </button>
+
+
+            <button
+                class="key-enter"
+                onclick="scanCode()">
+
+                Enter
+
+            </button>
+
+        </div>
+
+
+        <!-- =========================
+             CART
+             ========================= -->
+
+        <div class="cart">
+
+            <h2>Cart</h2>
+
+            <div id="cart">
+
+                <p>No items in cart.</p>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             TOTALS
+             ========================= -->
+
+        <div class="totals">
+
+            <div class="total-row">
+
+                <span>
+                    Subtotal:
+                </span>
+
+                <span id="subtotal">
+                    $0.00
+                </span>
+
+            </div>
+
+
+            <div class="total-row">
+
+                <span>
+                    Discount:
+                </span>
+
+                <span id="discount">
+                    $0.00
+                </span>
+
+            </div>
+
+
+            <div class="total-row grand-total">
+
+                <span>
+                    Total:
+                </span>
+
+                <span id="total">
+                    $0.00
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             BOTTOM BUTTONS
+             ========================= -->
+
+        <div class="bottom-buttons">
+
+            <button
+                class="selected-discount"
+                onclick="discountSelected()">
+
+                % OFF Selected
+
+            </button>
+
+
+            <button
+                class="checkout"
+                onclick="checkout()">
+
+                Checkout
+
+            </button>
+
+
+            <button
+                class="new-sale"
+                onclick="newSale()">
+
+                New Sale
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /* =========================
+       ADMINISTRATOR
+       ========================= */
+
+    const ADMIN_CODE = "0302";
+
+    let administratorUnlocked =
+        sessionStorage.getItem(
+            "administratorUnlocked"
+        ) === "true";
+
+
+    function administratorLogin() {
+
+        if (administratorUnlocked) {
+
+            const logout =
+                confirm(
+                    "Lock administrator mode?"
+                );
+
+            if (logout) {
+
+                administratorUnlocked = false;
+
+                sessionStorage.removeItem(
+                    "administratorUnlocked"
+                );
+
+                updateAdministratorDisplay();
+
+            }
+
+            return;
+        }
+
+
+        const code =
+            prompt(
+                "Enter administrator code:"
+            );
+
+
+        if (code === ADMIN_CODE) {
+
+            administratorUnlocked = true;
+
+            sessionStorage.setItem(
+                "administratorUnlocked",
+                "true"
+            );
+
+            alert(
+                "Administrator mode unlocked."
+            );
+
+            updateAdministratorDisplay();
+
+        } else if (code !== null) {
+
+            alert(
+                "Incorrect administrator code."
+            );
+
+        }
+
+    }
+
+
+    function updateAdministratorDisplay() {
+
+        const status =
+            document.getElementById(
+                "adminStatus"
+            );
+
+        const button =
+            document.getElementById(
+                "adminButton"
+            );
+
+
+        if (administratorUnlocked) {
+
+            status.textContent =
+                "🔓 Administrator Unlocked";
+
+            status.className =
+                "admin-status admin-unlocked";
+
+            button.textContent =
+                "Lock Administrator";
+
+            button.classList.add(
+                "admin-logout"
+            );
+
+        } else {
+
+            status.textContent =
+                "🔒 Administrator Locked";
+
+            status.className =
+                "admin-status admin-locked";
+
+            button.textContent =
+                "Administrator Login";
+
+            button.classList.remove(
+                "admin-logout"
+            );
+
+        }
+
+    }
+
+
+    function requireAdministrator() {
+
+        if (administratorUnlocked) {
+
+            return true;
+
+        }
+
+
+        alert(
+            "Administrator code required."
+        );
+
+        return false;
+
+    }
+
+
+    /* =========================
+       CART
+       ========================= */
+
+    let cart = [];
+
+
+    /* =========================
+       SCANNER
+       ========================= */
+
+    function scanCode() {
+
+        const display =
+            document.getElementById(
+                "display"
+            );
+
+
+        const code =
+            display.value.trim();
+
+
+        if (!code) {
+
+            return;
+
+        }
+
+
+        fetch(
+            "/cash/scan?code=" +
+            encodeURIComponent(code)
+        )
+
+        .then(response => {
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Code not found"
+                );
+
+            }
+
+
+            return response.json();
+
+        })
+
+        .then(data => {
+
+            if (data.type === "ITEM") {
+
+                addItem(data);
+
+            }
+
+            else if (
+                data.type === "COUPON"
+            ) {
+
+                /*
+                 * COUPONS ARE ADMIN ONLY.
+                 */
+
+                if (!requireAdministrator()) {
+
+                    display.value = "";
+
+                    display.focus();
+
+                    return;
+
+                }
+
+                applyCoupon(data);
+
+            }
+
+
+            display.value = "";
+
+            display.focus();
+
+        })
+
+        .catch(error => {
+
+            alert(
+                "Code not found."
+            );
+
+            display.value = "";
+
+            display.focus();
+
+        });
+
+    }
+
+
+    /* =========================
+       ADD ITEM
+
+       Every scan creates a
+       separate cart row.
+       ========================= */
+
+    function addItem(data) {
+
+        cart.push({
+
+            id: data.id,
+
+            code: data.code,
+
+            name: data.name,
+
+            price: data.price,
+
+            quantity: 1,
+
+            discountPercent: 0,
+
+            selected: false
+
+        });
+
+
+        renderCart();
+
+    }
+
+
+    /* =========================
+       APPLY COUPON
+       ========================= */
+
+    function applyCoupon(coupon) {
+
+        if (!requireAdministrator()) {
+
+            return;
+
+        }
+
+
+        const item =
+            cart.find(
+                item =>
+                    item.code ===
+                    coupon.itemCode
+            );
+
+
+        if (!item) {
+
+            alert(
+                "Scan the item first before scanning this coupon."
+            );
+
+            return;
+
+        }
+
+
+        item.discountPercent =
+            coupon.discountPercent;
+
+
+        renderCart();
+
+    }
+
+
+    /* =========================
+       RENDER CART
+       ========================= */
+
+    function renderCart() {
+
+        const cartElement =
+            document.getElementById(
+                "cart"
+            );
+
+
+        cartElement.innerHTML = "";
+
+
+        if (cart.length === 0) {
+
+            cartElement.innerHTML =
+                "<p>No items in cart.</p>";
+
+            updateTotals();
+
+            return;
+
+        }
+
+
+        cart.forEach(
+            (item, index) => {
+
+                const itemTotal =
+                    item.price *
+                    item.quantity;
+
+
+                const discountAmount =
+                    itemTotal *
+                    (
+                        item.discountPercent /
+                        100
+                    );
+
+
+                const finalTotal =
+                    itemTotal -
+                    discountAmount;
+
+
+                const div =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                div.className =
+                    "cart-item";
+
+
+                div.innerHTML = `
+
+                    <div class="cart-top">
+
+                        <input
+                            type="checkbox"
+                            ${item.selected ? "checked" : ""}
+                            onchange="toggleSelected(${index})">
+
+
+                        <div class="cart-name">
+
+                            ${
+                                item.name
+                                ? item.name
+                                : "No Name"
+                            }
+
+                            <div class="cart-code">
+
+                                Code: ${item.code}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="quantity-controls">
+
+                            <button
+                                onclick="changeQuantity(${index}, -1)">
+
+                                -
+
+                            </button>
+
+
+                            <span class="quantity">
+
+                                ${item.quantity}
+
+                            </span>
+
+
+                            <button
+                                onclick="changeQuantity(${index}, 1)">
+
+                                +
+
+                            </button>
+
+                        </div>
+
+
+                        <div class="cart-price">
+
+                            $${finalTotal.toFixed(2)}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="cart-actions">
+
+                        <button
+                            class="price-btn"
+                            onclick="editPrice(${index})">
+
+                            Edit Price
+
+                        </button>
+
+
+                        ${
+                            item.discountPercent > 0
+
+                            ?
+
+                            `
+
+                            <button
+                                class="remove-discount-btn"
+                                onclick="removeDiscount(${index})">
+
+                                Remove
+                                ${item.discountPercent}% OFF
+
+                            </button>
+
+                            `
+
+                            :
+
+                            `
+
+                            <button
+                                class="discount-btn"
+                                onclick="manualDiscount(${index})">
+
+                                % OFF
+
+                            </button>
+
+                            `
+                        }
+
+                    </div>
+
+                `;
+
+
+                cartElement.appendChild(
+                    div
+                );
+
+            }
+        );
+
+
+        updateTotals();
+
+    }
+
+
+    /* =========================
+       QUANTITY
+       ========================= */
+
+    function changeQuantity(
+        index,
+        amount
+    ) {
+
+        cart[index].quantity +=
+            amount;
+
+
+        if (
+            cart[index].quantity <= 0
+        ) {
+
+            cart.splice(
+                index,
+                1
+            );
+
+        }
+
+
+        renderCart();
+
+    }
+
+
+    /* =========================
+       SELECT
+       ========================= */
+
+    function toggleSelected(index) {
+
+        cart[index].selected =
+            !cart[index].selected;
+
+    }
+
+
+    /* =========================
+       MANUAL DISCOUNT
+       ADMIN ONLY
+       ========================= */
+
+    function manualDiscount(index) {
+
+        if (!requireAdministrator()) {
+
+            return;
+
+        }
+
+
+        if (!cart[index]) {
+
+            return;
+
+        }
+
+
+        const percent =
+            parseFloat(
+                prompt(
+                    "Enter discount percentage:"
+                )
+            );
+
+
+        if (isNaN(percent)) {
+
+            return;
+
+        }
+
+
+        if (
+            percent <= 0 ||
+            percent > 100
+        ) {
+
+            alert(
+                "Discount must be between 0 and 100."
+            );
+
+            return;
+
+        }
+
+
+        cart[index].discountPercent =
+            percent;
+
+
+        renderCart();
+
+    }
+
+
+    /* =========================
+       SELECTED DISCOUNT
+       ADMIN ONLY
+       ========================= */
+
+    function discountSelected() {
+
+        if (!requireAdministrator()) {
+
+            return;
+
+        }
+
+
+        const selectedItems =
+            cart.filter(
+                item =>
+                    item.selected
+            );
+
+
+        if (selectedItems.length === 0) {
+
+            alert(
+                "Select at least one item first."
+            );
+
+            return;
+
+        }
+
+
+        const percent =
+            parseFloat(
+                prompt(
+                    "Enter discount percentage:"
+                )
+            );
+
+
+        if (isNaN(percent)) {
+
+            return;
+
+        }
+
+
+        if (
+            percent <= 0 ||
+            percent > 100
+        ) {
+
+            alert(
+                "Discount must be between 0 and 100."
+            );
+
+            return;
+
+        }
+
+
+        cart.forEach(item => {
+
+            if (item.selected) {
+
+                item.discountPercent =
+                    percent;
+
+            }
+
+        });
+
+
+        renderCart();
+
+    }
+
+
+    /* =========================
+       REMOVE DISCOUNT
+       ADMIN ONLY
+       ========================= */
+
+    function removeDiscount(index) {
+
+        if (!requireAdministrator()) {
+
+            return;
+
+        }
+
+
+        if (!cart[index]) {
+
+            return;
+
+        }
+
+
+        cart[index].discountPercent =
+            0;
+
+
+        renderCart();
+
+    }
+
+
+    /* =========================
+       EDIT PRICE
+
+       Only changes this cart
+       row and requires admin.
+
+       Does NOT change database.
+       ========================= */
+
+    function editPrice(index) {
+
+        if (
+            !requireAdministrator()
+        ) {
+
+            return;
+
+        }
+
+
+        const item =
+            cart[index];
+
+
+        if (!item) {
+
+            return;
+
+        }
+
+
+        const newPrice =
+            parseFloat(
+                prompt(
+                    "Enter new price:",
+                    Number(item.price).toFixed(2)
+                )
+            );
+
+
+        if (isNaN(newPrice)) {
+
+            return;
+
+        }
+
+
+        if (newPrice < 0) {
+
+            alert(
+                "Price cannot be negative."
+            );
+
+            return;
+
+        }
+
+
+        item.price =
+            newPrice;
+
+
+        renderCart();
+
+    }
+
+
+    /* =========================
+       TOTALS
+       ========================= */
+
+    function updateTotals() {
+
+        let subtotal = 0;
+
+        let discount = 0;
+
+
+        cart.forEach(item => {
+
+            const itemSubtotal =
+                item.price *
+                item.quantity;
+
+
+            const itemDiscount =
+                itemSubtotal *
+                (
+                    item.discountPercent /
+                    100
+                );
+
+
+            subtotal +=
+                itemSubtotal;
+
+
+            discount +=
+                itemDiscount;
+
+        });
+
+
+        const total =
+            subtotal -
+            discount;
+
+
+        document
+            .getElementById(
+                "subtotal"
+            )
+            .textContent =
+            "$" +
+            subtotal.toFixed(2);
+
+
+        document
+            .getElementById(
+                "discount"
+            )
+            .textContent =
+            "$" +
+            discount.toFixed(2);
+
+
+        document
+            .getElementById(
+                "total"
+            )
+            .textContent =
+            "$" +
+            total.toFixed(2);
+
+    }
+
+
+    /* =========================
+       KEYPAD
+       ========================= */
+
+    function addNumber(number) {
+
+        const display =
+            document.getElementById(
+                "display"
+            );
+
+
+        display.value +=
+            number;
+
+
+        display.focus();
+
+    }
+
+
+    function clearDisplay() {
+
+        document
+            .getElementById(
+                "display"
+            )
+            .value = "";
+
+
+        document
+            .getElementById(
+                "display"
+            )
+            .focus();
+
+    }
+
+
+    /* =========================
+       CHECKOUT
+       ========================= */
+
+    function checkout() {
+
+        if (cart.length === 0) {
+
+            alert(
+                "There are no items in the cart."
+            );
+
+            return;
+
+        }
+
+
+        const total =
+            document
+                .getElementById(
+                    "total"
+                )
+                .textContent;
+
+
+        const confirmed =
+            confirm(
+                "Checkout total: " +
+                total +
+                "?\n\nComplete this sale?"
+            );
+
+
+        if (!confirmed) {
+
+            return;
+
+        }
+
+
+        alert(
+            "Sale completed!\n\nTotal: " +
+            total
+        );
+
+
+        cart = [];
+
+        renderCart();
+
+        clearDisplay();
+
+    }
+
+
+    /* =========================
+       NEW SALE
+       ========================= */
+
+    function newSale() {
+
+        if (cart.length > 0) {
+
+            const confirmed =
+                confirm(
+                    "Start a new sale? This will clear the current cart."
+                );
+
+
+            if (!confirmed) {
+
+                return;
+
+            }
+
+        }
+
+
+        cart = [];
+
+        clearDisplay();
+
+        renderCart();
+
+    }
+
+
+    /* =========================
+       ENTER KEY
+       ========================= */
+
+    document
+        .getElementById(
+            "display"
+        )
+        .addEventListener(
+            "keydown",
+            function(event) {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    scanCode();
+
+                }
+
+            }
+        );
+
+
+    /* =========================
+       INITIAL LOAD
+       ========================= */
+
+    window.addEventListener(
+        "load",
+        function() {
+
+            document
+                .getElementById(
+                    "display"
+                )
+                .focus();
+
+
+            renderCart();
+
+
+            updateAdministratorDisplay();
+
+        }
+    );
+
+</script>
+
+</body>
+</html>

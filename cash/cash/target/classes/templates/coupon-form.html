@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title th:text="${coupon.id == null ? 'Add Coupon' : 'Edit Coupon'}">
+        Add Coupon
+    </title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #101010, #202020);
+            color: white;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 60px auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-box {
+            background: #181818;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: #252525;
+            color: white;
+            font-size: 16px;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        option {
+            background: #252525;
+            color: white;
+        }
+
+        button,
+        .back-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin-top: 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            color: white;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        button {
+            background: #1976d2;
+        }
+
+        button:hover {
+            background: #125ca1;
+        }
+
+        .back-btn {
+            background: #444;
+        }
+
+        .back-btn:hover {
+            background: #555;
+        }
+
+        .error {
+            background: #7a1f1f;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .info {
+            margin-top: 8px;
+            color: #aaa;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1 th:text="${coupon.id == null ? 'Add Coupon' : 'Edit Coupon'}">
+        Add Coupon
+    </h1>
+
+    <div class="form-box">
+
+        <!-- Error Messages -->
+
+        <div class="error"
+             th:if="${param.error != null and param.error[0] == 'code'}">
+            Please enter a coupon code.
+        </div>
+
+        <div class="error"
+             th:if="${param.error != null and param.error[0] == 'item'}">
+            Please select an item.
+        </div>
+
+        <div class="error"
+             th:if="${param.error != null and param.error[0] == 'percent'}">
+            Discount must be greater than 0% and no more than 100%.
+        </div>
+
+        <div class="error"
+             th:if="${param.error != null and param.error[0] == 'duplicate'}">
+            That coupon code already exists.
+        </div>
+
+        <div class="error"
+             th:if="${param.error != null and param.error[0] == 'itemnotfound'}">
+            The selected item could not be found.
+        </div>
+
+        <div class="error"
+             th:if="${param.error != null and param.error[0] == 'conflict'}">
+            That coupon code is already being used by an item.
+        </div>
+
+
+        <!-- ADD COUPON -->
+
+        <form
+            th:if="${coupon.id == null}"
+            action="/coupons"
+            method="post">
+
+            <!-- Coupon Code -->
+
+            <label for="code">
+                Coupon Barcode / Code
+            </label>
+
+            <input
+                type="text"
+                id="code"
+                name="code"
+                th:value="${coupon.code}"
+                placeholder="Example: 5555"
+                maxlength="30"
+                required>
+
+            <div class="info">
+                Enter the code that will be used/scanned for this coupon.
+            </div>
+
+
+            <!-- Discount -->
+
+            <label for="discountPercent">
+                Discount Percent
+            </label>
+
+            <input
+                type="number"
+                id="discountPercent"
+                name="discountPercent"
+                th:value="${coupon.discountPercent}"
+                min="0.01"
+                max="100"
+                step="0.01"
+                placeholder="Example: 20"
+                required>
+
+            <div class="info">
+                Example: 20 means 20% off.
+            </div>
+
+
+            <!-- Item -->
+
+            <label for="itemCode">
+                Item
+            </label>
+
+            <select
+                id="itemCode"
+                name="itemCode"
+                required>
+
+                <option value="">
+                    Select an item
+                </option>
+
+                <option
+                    th:each="item : ${cash}"
+                    th:value="${item.code}"
+                    th:text="${item.name != null and !item.name.isEmpty()
+                        ? item.name + ' - $' + #numbers.formatDecimal(item.price, 1, 2)
+                        : 'No Name - $' + #numbers.formatDecimal(item.price, 1, 2)}">
+                </option>
+
+            </select>
+
+            <div class="info">
+                Select the item this coupon will apply to.
+            </div>
+
+
+            <button type="submit">
+                Add Coupon
+            </button>
+
+        </form>
+
+
+        <!-- EDIT COUPON -->
+
+        <form
+            th:if="${coupon.id != null}"
+            th:action="@{/coupons/update/{id}(id=${coupon.id})}"
+            method="post">
+
+            <!-- Coupon Code -->
+
+            <label for="code">
+                Coupon Barcode / Code
+            </label>
+
+            <input
+                type="text"
+                id="code"
+                name="code"
+                th:value="${coupon.code}"
+                placeholder="Example: 5555"
+                maxlength="30"
+                required>
+
+            <div class="info">
+                Enter the code that will be used/scanned for this coupon.
+            </div>
+
+
+            <!-- Discount -->
+
+            <label for="discountPercent">
+                Discount Percent
+            </label>
+
+            <input
+                type="number"
+                id="discountPercent"
+                name="discountPercent"
+                th:value="${coupon.discountPercent}"
+                min="0.01"
+                max="100"
+                step="0.01"
+                placeholder="Example: 20"
+                required>
+
+            <div class="info">
+                Example: 20 means 20% off.
+            </div>
+
+
+            <!-- Item -->
+
+            <label for="itemCode">
+                Item
+            </label>
+
+            <select
+                id="itemCode"
+                name="itemCode"
+                required>
+
+                <option value="">
+                    Select an item
+                </option>
+
+                <option
+                    th:each="item : ${cash}"
+                    th:value="${item.code}"
+                    th:selected="${item.code == coupon.itemCode}"
+                    th:text="${item.name != null and !item.name.isEmpty()
+                        ? item.name + ' - $' + #numbers.formatDecimal(item.price, 1, 2)
+                        : 'No Name - $' + #numbers.formatDecimal(item.price, 1, 2)}">
+                </option>
+
+            </select>
+
+            <div class="info">
+                Select the item this coupon will apply to.
+            </div>
+
+
+            <button type="submit">
+                Save Changes
+            </button>
+
+        </form>
+
+
+        <a href="/cash" class="back-btn">
+            Back to Cash List
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>
